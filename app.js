@@ -44,9 +44,9 @@ const AXES = [
 ];
 
 const ANSWER_LABELS = [
-  { value:1, label:'Скорее да' },
+  { value:1, label:'Скорее согласен' },
   { value:0, label:'Трудно ответить' },
-  { value:-1, label:'Скорее нет' },
+  { value:-1, label:'Скорее не согласен' },
 ];
 
 const QUIPS = {
@@ -72,6 +72,9 @@ let audioPlaying=null;
 let currentQuip=null;
 let unsureQuipPlayed=false;
 let toastTimer;
+let advanceTimer=null;
+let queuedQuip=null;
+function cancelAdvance(){if(advanceTimer!==null){clearTimeout(advanceTimer);advanceTimer=null;}}
 
 function safeLoad(){
   try {
@@ -149,7 +152,7 @@ function header(showSound=true){
 }
 function bindSound(){
  const btn=document.getElementById('sound-toggle');
- if(btn)btn.addEventListener('click',()=>{state.muted=!state.muted;save();if(state.muted)stopAudio();bindRerender();});
+ if(btn)btn.addEventListener('click',()=>{state.muted=!state.muted;save();if(state.muted)stopAudio();btn.textContent=state.muted?'🔇':'🔊';btn.setAttribute('aria-label',state.muted?'Включить звук':'Выключить звук');btn.title=state.muted?'Включить звук':'Выключить звук';});
 }
 function bindRerender(){
  // Only re-render interface; don't restart a voice track by entering a screen.
@@ -158,6 +161,7 @@ function bindRerender(){
  else renderResults();
 }
 function renderStart(){
+  cancelAdvance();queuedQuip=null;document.documentElement.classList.remove('quiz-active');
   state.screen='start';
   const saved=answeredCount();
   APP.innerHTML=`<main class="page-card" id="page">
@@ -180,18 +184,18 @@ function renderStart(){
   if(restart)restart.addEventListener('click',()=>{reset();state.screen='question';currentQuip=null;renderQuestion();});
 }
 function renderQuestion(){
+  cancelAdvance();document.documentElement.classList.add('quiz-active');
   state.screen='question';save();
   const idx=state.index, question=QUESTIONS[idx],selected=state.answers[idx],progress=Math.round((idx+(selected!==null?1:0))*100/QUESTIONS.length);
   const theme=idx%7;
   APP.innerHTML=`<main class="page-card quiz-card quiz-theme-${theme}" id="page">
     <div class="quiz-header">${header()}
-      <div class="progress-heading"><span class="step-name">Вопрос ${idx+1} / ${QUESTIONS.length}</span><span>Пройдено ${progress}%</span></div>
+      <div class="progress-heading"><span class="step-name">Вопрос ${idx+1} / ${QUESTIONS.length}</span></div>
       <div class="progress-track" role="progressbar" aria-label="Прогресс теста" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100"><div class="progress-fill" style="width:${progress}%"></div></div>
     </div>
     <section class="question-stage slide-in" aria-labelledby="question-title">
       <div class="question-copy">
-        <div class="topic-kicker">ТВОЯ ПОЗИЦИЯ · ${String(idx+1).padStart(2,'0')}</div>
-        <h2 class="question-title" id="question-title">${escapeHtml(question.text)}</h2>
+        <h2 class="question-title${question.text.length>120?" long-question":""}" id="question-title">${escapeHtml(question.text)}</h2>
         <p class="question-hint">Насколько ты согласен с утверждением?</p>
         <div class="answers" role="radiogroup" aria-label="Выбери один ответ">
           ${ANSWER_LABELS.map((a,i)=>`<button type="button" class="answer ${selected===a.value?'selected':''}" role="radio" aria-checked="${selected===a.value}" data-value="${a.value}" aria-label="${a.label}"><span class="radio-circle"></span><span>${a.label}</span></button>`).join('')}
@@ -199,7 +203,6 @@ function renderQuestion(){
       </div>
       <div class="nav-controls">
         <button type="button" class="text-btn" id="back-button">← ${idx===0?'На главную':'Назад'}</button>
-        <button type="button" class="primary-btn quiz-next" id="next-button" ${selected===null?'disabled':''}>${idx===QUESTIONS.length-1?'Узнать результат':'Далее'} <span class="arrow" aria-hidden="true">→</span></button>
       </div>
     </section>
   </main>`;
@@ -207,18 +210,18 @@ function renderQuestion(){
   if(currentQuip && QUIPS[currentQuip])showQuipCard(currentQuip);
   const answers=APP.querySelectorAll('.answer');
   answers.forEach(btn=>btn.addEventListener('click',()=>{
+    if(advanceTimer!==null)return;
     const value=Number(btn.dataset.value);state.answers[idx]=value;save();
-    answers.forEach(el=>{const on=Number(el.dataset.value)===value;el.classList.toggle('selected',on);el.setAttribute('aria-checked',String(on));});
-    const next=document.getElementById('next-button');next.disabled=false;
-    document.querySelector('.progress-heading span:last-child').textContent=`Пройдено ${Math.round((idx+1)*100/QUESTIONS.length)}%`;
-    document.querySelector('.progress-fill').style.width=`${Math.round((idx+1)*100/QUESTIONS.length)}%`;
-    document.querySelector('.progress-track').setAttribute('aria-valuenow',String(Math.round((idx+1)*100/QUESTIONS.length)));
+    answers.forEach(el=>{const on=Number(el.dataset.value)===value;el.classList.toggle('selected',on);el.setAttribute('aria-checked',String(on));el.disabled=true;});
+    const updated=Math.round((idx+1)*100/QUESTIONS.length);
+    document.querySelector('.progress-fill').style.width=`${updated}%`;
+    document.querySelector('.progress-track').setAttribute('aria-valuenow',String(updated));
     const neutralCount=state.answers.filter(x=>x===0).length;
-    if(value===0 && neutralCount>=4 && !unsureQuipPlayed){unsureQuipPlayed=true;playQuip('unsure');}
+    if(value===0 && neutralCount>=4 && !unsureQuipPlayed){unsureQuipPlayed=true;queuedQuip='unsure';}
+    advanceTimer=setTimeout(()=>{advanceTimer=null;if(state.screen==='question' && state.index===idx)advance();},280);
   }));
-  document.getElementById('next-button').addEventListener('click',advance);
   document.getElementById('back-button').addEventListener('click',()=>{
-    stopAudio();
+    cancelAdvance();queuedQuip=null;stopAudio();
     if(state.index===0){currentQuip=null;renderStart();return;}
     state.index-=1;currentQuip=null;renderQuestion();
   });
@@ -231,7 +234,9 @@ function advance(){
   renderQuestion();
   const n=state.index+1;
   const key='q'+n;
-  if(QUIPS[key] && [4,10,16,22,25].includes(n))playQuip(key);
+  const quip=queuedQuip;queuedQuip=null;
+  if(quip)playQuip(quip);
+  else if(QUIPS[key] && [4,10,16,22,25].includes(n))playQuip(key);
 }
 function getScores(){
   const scores={};
@@ -258,6 +263,7 @@ function axisComment(score){
   return 'Смешанная или умеренная позиция';
 }
 function renderResults(){
+  cancelAdvance();queuedQuip=null;document.documentElement.classList.remove('quiz-active');
   state.screen='result';save();
   const scores=getScores();
   APP.innerHTML=`<main class="page-card results-card" id="page">
@@ -294,14 +300,11 @@ function toast(msg){
  const el=document.getElementById('toast');if(!el)return;
  el.textContent=msg;el.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('visible'),2400);
 }
-function reset(){state.answers=Array(QUESTIONS.length).fill(null);state.index=0;unsureQuipPlayed=false;currentQuip=null;save();}
+function reset(){cancelAdvance();queuedQuip=null;state.answers=Array(QUESTIONS.length).fill(null);state.index=0;unsureQuipPlayed=false;currentQuip=null;save();}
 window.addEventListener('keydown',e=>{
  if(state.screen!=='question' || e.altKey||e.ctrlKey||e.metaKey||['INPUT','TEXTAREA'].includes(document.activeElement?.tagName))return;
  if(['1','2','3'].includes(e.key)){
   const btn=APP.querySelectorAll('.answer')[Number(e.key)-1];if(btn){btn.click();e.preventDefault();}
- }
- if(e.key==='Enter' && document.activeElement?.tagName!=='BUTTON'){
-   const next=document.getElementById('next-button');if(next && !next.disabled){next.click();e.preventDefault();}
  }
  if(e.key==='ArrowLeft' && document.activeElement?.tagName!=='BUTTON'){
   document.getElementById('back-button')?.click();e.preventDefault();
