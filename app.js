@@ -44,11 +44,11 @@ const AXES = [
 ];
 
 const ANSWER_LABELS = [
-  { value:2, label:'Согласен', lines:['Согласен'] },
-  { value:1, label:'Скорее согласен', lines:['Скорее','согласен'] },
-  { value:0, label:'Трудно ответить', lines:['Трудно','ответить'] },
-  { value:-1, label:'Скорее не согласен', lines:['Скорее','не согласен'] },
   { value:-2, label:'Не согласен', lines:['Не','согласен'] },
+  { value:-1, label:'Скорее не согласен', lines:['Скорее','не согласен'] },
+  { value:0, label:'Трудно ответить', lines:['Трудно','ответить'] },
+  { value:1, label:'Скорее согласен', lines:['Скорее','согласен'] },
+  { value:2, label:'Согласен', lines:['Согласен'] },
 ];
 
 const QUIPS = {
@@ -226,14 +226,20 @@ function header(showSound=true){
   return `<header class="site-header">
     <div class="brand-box">
       <a class="brand-link" href="https://anicourses.ru" target="_blank" rel="noopener noreferrer" title="Аникурсы — перейти на сайт"><img src="assets/anikursy-logo.png" alt="АНИКУРСЫ"></a>
-      <div class="brand-caption">подготовка к ЕГЭ/ОГЭ на высокие баллы</div>
     </div>
-    <div class="header-actions"><span class="pill">Обществознание</span><span class="pill pink">Тест</span>
+    <div class="header-actions"><span class="pill">Обществознание</span><button type="button" class="pill pink restart-control" id="header-restart" aria-label="Начать тест заново" title="Сбросить ответы и начать сначала">Начать заново</button>
       ${showSound?`<button class="sound-button" type="button" id="sound-toggle" aria-label="${state.muted?'Включить звук':'Выключить звук'}" title="${state.muted?'Включить звук':'Выключить звук'}">${state.muted?'🔇':'🔊'}</button>`:''}
     </div>
   </header>`;
 }
 function bindSound(){
+ const restart=document.getElementById('header-restart');
+ if(restart)restart.addEventListener('click',()=>{
+   if(answeredCount()>0 && !window.confirm('Начать тест заново? Предыдущие ответы будут удалены.'))return;
+   stopAudio();reset();state.screen='question';renderQuestion();
+   lastReactionIndex=state.index;reactionCount=0;
+   playQuip({text:randomLine(QUIPS.intro),kind:'intro'});
+ });
  const btn=document.getElementById('sound-toggle');
  if(btn)btn.addEventListener('click',()=>{state.muted=!state.muted;save();if(state.muted)stopAudio();btn.textContent=state.muted?'🔇':'🔊';btn.setAttribute('aria-label',state.muted?'Включить звук':'Выключить звук');btn.title=state.muted?'Включить звук':'Выключить звук';});
 }
