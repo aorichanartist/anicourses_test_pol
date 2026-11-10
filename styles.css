@@ -55,3 +55,46 @@ html.quiz-active .app-shell{height:100dvh;min-height:0;padding:0;display:flex;ov
  .quiz-card .question-title.long-question{font-size:clamp(17px,4.8vw,22px)}
  .quiz-card .answer{min-height:40px}
 }
+
+/* Five-point answers layout: one row on desktop, compact stacked choices on phones */
+.quiz-card .answers{
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  width:min(100%,1180px);
+  gap:clamp(6px,.9vw,12px);
+}
+.quiz-card .answer{
+  min-height:clamp(62px,10.4dvh,98px);
+  padding:clamp(8px,1.3dvh,14px) 5px;
+  gap:clamp(5px,.9dvh,9px);
+  font-size:clamp(13px,1.38vw,18px);
+  border-radius:17px;
+}
+.quiz-card .answer-label{
+  display:block;
+  line-height:1.16;
+  font-weight:800;
+  overflow-wrap:normal;
+}
+@media (max-width:740px){
+  .quiz-card .answers{
+    grid-template-columns:1fr;
+    gap:clamp(4px,.85dvh,7px);
+    width:100%;
+  }
+  .quiz-card .answer{
+    flex-direction:row;
+    justify-content:flex-start;
+    min-height:clamp(41px,7.5dvh,56px);
+    padding:7px 13px;
+    gap:11px;
+    font-size:clamp(13px,3.75vw,16px);
+    border-radius:13px;
+  }
+  .quiz-card .answer-label{text-align:left;}
+  .quiz-card .answer-label br{display:none;}
+}
+@media (max-width:740px) and (max-height:620px){
+  .quiz-card .answer{min-height:37px;padding:5px 10px;}
+  .quiz-card .question-title{font-size:clamp(18px,5.5vw,26px);}
+  .quiz-card .question-hint{margin:4px 0 7px;}
+}
