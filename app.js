@@ -3,7 +3,7 @@
 /*
  * Аникурсы: тест политических взглядов (демоверсия 1.0)
  * Вопросы оригинальные; концепция 4 осей вдохновлена 8values / Pew.
- * Ответы: 1 = скорее да, 0 = трудно ответить, -1 = скорее нет.
+ * Ответы: +2 / +1 = согласие, 0 = затруднение, -1 / -2 = несогласие.
  * polarity: +1 = ответ "да" сдвигает к левому полюсу оси, -1 = к правому.
  * Никакой политической рекламы, трекинга или отправки ответов на сервер нет.
  */
@@ -44,24 +44,108 @@ const AXES = [
 ];
 
 const ANSWER_LABELS = [
-  { value:1, label:'Скорее согласен' },
-  { value:0, label:'Трудно ответить' },
-  { value:-1, label:'Скорее не согласен' },
+  { value:2, label:'Согласен', lines:['Согласен'] },
+  { value:1, label:'Скорее согласен', lines:['Скорее','согласен'] },
+  { value:0, label:'Трудно ответить', lines:['Трудно','ответить'] },
+  { value:-1, label:'Скорее не согласен', lines:['Скорее','не согласен'] },
+  { value:-2, label:'Не согласен', lines:['Не','согласен'] },
 ];
 
 const QUIPS = {
-  intro: { text:'Так, юный политолог! Я тут главный эксперт. Меня даже с дивана не выгнали.', file:'intro.mp3' },
-  q4: { text:'Четыре вопроса! А я уже устал сильнее, чем после трёх минут работы.', file:'q4.mp3' },
-  q7: { text:'Мой политический курс простой: сначала обед, потом государственные дела.', file:'q7.mp3' },
-  q10: { text:'Тишина в кабинете! Здесь мыслит великий крот. Ну, почти.', file:'q10.mp3' },
-  q13: { text:'Если что, я тоже центр. Центр дивана.', file:'q13.mp3' },
-  q16: { text:'Я за свободу! Особенно свободу от домашки.', file:'q16.mp3' },
-  q19: { text:'Моя партия называется «Поспим ещё пять минут». Пока нас двое.', file:'q19.mp3' },
-  q22: { text:'Осталось чуть-чуть. Я бы на твоём месте уже потребовал печеньку.', file:'q22.mp3' },
-  q25: { text:'Последний вопрос! Сейчас узнаем, кто тут самый политический.', file:'q25.mp3' },
-  unsure: { text:'Трудно ответить? Уважаю. Я так отвечал на вопрос, сколько будет два плюс два.', file:'unsure.mp3' },
-  result: { text:'Готово! Твой политический портрет. Себе я, кстати, нарисовал корону.', file:'result.mp3' },
+  intro: [
+    'Начинаем! Я тут главный эксперт. Без диплома.',
+    'Так, опрос! Я уже проголосовал за обед.',
+    'Комиссия кротов собралась. Один я пришёл.',
+  ],
+  result: [
+    'Готово! Мой политический портрет почему-то с короной.',
+    'Результат готов. Мой манифест опять съели.',
+    'Вот твои взгляды. Мои — на холодильник.',
+  ],
+  reactions: {
+    economy: {
+      agree: [
+        'Я за общий склад печенья. Ключ — у меня.',
+        'Экономика под контролем. Кроме моего кошелька.',
+        'Учёт запасов? У меня уже три пустые банки.',
+      ],
+      disagree: [
+        'Рыночек свободен. Мои черви разбежались.',
+        'Открываю бизнес: продаю воздух из норы.',
+        'Конкуренция? Соседний крот украл мой ценник.',
+      ],
+      neutral: [
+        'Экономика сложная. Я делю одну печеньку на троих.',
+        'Мой бухгалтер ушёл в спячку.',
+        'Бюджет не сошёлся. Осталась одна крошка.',
+      ],
+    },
+    freedoms: {
+      agree: [
+        'Свобода слова? Тогда заявляю: хочу спать.',
+        'Пойду на митинг за выходной во вторник.',
+        'Никаких запретов! Кроме будильника.',
+      ],
+      disagree: [
+        'Порядок в норе есть. Я его вчера потерял.',
+        'Полномочия? Мне бы право не мыть чашку.',
+        'У нас строгий режим: после обеда — сон.',
+      ],
+      neutral: [
+        'Я воздержался. Меня и не спрашивали.',
+        'Совет кротов спорит. Я на обеде.',
+        'Спорный вопрос. Пульт пока у меня.',
+      ],
+    },
+    society: {
+      agree: [
+        'Перемены? Ладно, переставлю диван.',
+        'Реформирую нору. Вход теперь через кухню.',
+        'Новое поколение требует второй холодильник.',
+      ],
+      disagree: [
+        'Наш главный обычай — воровать одеяло.',
+        'Традиции! По пятницам прячем пульт.',
+        'У прадеда тоже была эта кружка. Наверное.',
+      ],
+      neutral: [
+        'Старое или новое? Я даже носки не выбрал.',
+        'Совет старейшин кротов опять ушёл на обед.',
+        'Вопрос тонкий. Как стенка моей норы.',
+      ],
+    },
+    world: {
+      agree: [
+        'Саммит нор открыт. Повестка: печенье.',
+        'Соседний ёж просит совместный ужин.',
+        'Дипломатия: я принёс чай, ёж — колючки.',
+      ],
+      disagree: [
+        'Строю таможню у входа. Пропуск — морковка.',
+        'Границы норы охраняет тапок.',
+        'У меня суверенная нора. И общая кухня.',
+      ],
+      neutral: [
+        'Переговоры с ежом сорваны. Он свернулся.',
+        'Я пока нейтрален: чай пью со всеми.',
+        'Дипломаты спорят. Я ищу сахар.',
+      ],
+    },
+  },
 };
+function randomLine(lines){return lines[Math.floor(Math.random()*lines.length)];}
+let lastReactionIndex=-10;
+let reactionCount=0;
+function maybeQueueReaction(questionIndex,value){
+  // Only occasional jokes reacting to the answer just given; no answer is "right".
+  if(questionIndex<2 || questionIndex>=QUESTIONS.length-1 ||
+      questionIndex-lastReactionIndex<4 || reactionCount>=4 || Math.random()>.48)return;
+  const stance=value>0?'agree':value<0?'disagree':'neutral';
+  const lines=QUIPS.reactions[QUESTIONS[questionIndex].axis][stance];
+  queuedQuip={text:randomLine(lines),kind:'reaction'};
+  lastReactionIndex=questionIndex;reactionCount++;
+}
+
 
 const APP = document.getElementById('app');
 const IS_EMBEDDED = window.parent !== window;
@@ -70,7 +154,6 @@ const STORAGE_KEY='anikursy-political-quiz-v1';
 let state={screen:'start',index:0,answers:Array(QUESTIONS.length).fill(null),muted:false};
 let audioPlaying=null;
 let currentQuip=null;
-let unsureQuipPlayed=false;
 let toastTimer;
 let advanceTimer=null;
 let queuedQuip=null;
@@ -80,7 +163,7 @@ function safeLoad(){
   try {
     const raw=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
     if(raw && Array.isArray(raw.answers) && raw.answers.length===QUESTIONS.length){
-      const okay=raw.answers.every(x=>x===null || x===1 || x===0 || x===-1);
+      const okay=raw.answers.every(x=>x===null || [-2,-1,0,1,2].includes(x));
       if(okay){
         state.answers=raw.answers;
         state.index=Number.isInteger(raw.index)?Math.max(0,Math.min(QUESTIONS.length-1,raw.index)):0;
@@ -108,32 +191,32 @@ function speakFallback(text){
     speechSynthesis.speak(utterance);
   }catch(_){}
 }
-function showQuipCard(key){
+function showQuipCard(quip){
   document.querySelector('.mole-appearance')?.remove();
-  if(state.screen!=='question' || !QUIPS[key]) return;
+  if(state.screen!=='question' || !quip?.text)return;
   const page=document.getElementById('page');
-  if(!page) return;
+  if(!page)return;
+  const label=quip.kind==='reaction'?'КРОТ ПРО ТВОЙ ОТВЕТ':'КРОТ ВЛЕЗ В ЭФИР';
   page.insertAdjacentHTML('beforeend', `<aside class="mole-appearance" aria-label="Реплика Крота">
     <button type="button" class="mole-close" id="mole-close" aria-label="Закрыть реплику">×</button>
-    <img class="mole-pop-image" src="assets/mole-chaos.webp" alt="Крот внезапно влез в тест">
-    <div class="mole-pop-copy"><span class="mole-pop-label">КРОТ ВЛЕЗ В ЭФИР</span>
-      <p data-mole-message>${escapeHtml(QUIPS[key].text)}</p>
+    <img class="mole-pop-image" src="assets/mole-chaos.webp" alt="Крот комментирует">
+    <div class="mole-pop-copy"><span class="mole-pop-label">${label}</span>
+      <p data-mole-message>${escapeHtml(quip.text)}</p>
       <button type="button" class="replay-btn" id="replay-quep">↻ Слушать ещё</button>
     </div></aside>`);
   document.getElementById('mole-close')?.addEventListener('click',()=>{stopAudio();currentQuip=null;document.querySelector('.mole-appearance')?.remove();});
-  document.getElementById('replay-quep')?.addEventListener('click',()=>playQuip(key,true));
+  document.getElementById('replay-quep')?.addEventListener('click',()=>playQuip(quip));
 }
-function playQuip(key, force=false){
-  if(!QUIPS[key])return;
-  currentQuip=key;
-  if(state.screen==='question')showQuipCard(key);
+function playQuip(quip){
+  if(!quip?.text)return;
+  currentQuip=quip;
+  if(state.screen==='question')showQuipCard(quip);
   else {
     const msg=document.querySelector('[data-mole-message]');
-    if(msg) msg.textContent=QUIPS[key].text;
+    if(msg)msg.textContent=quip.text;
   }
   stopAudio();
-  if(state.muted)return;
-  speakFallback(QUIPS[key].text);
+  if(!state.muted)speakFallback(quip.text);
 }
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
@@ -164,14 +247,14 @@ function renderStart(){
   cancelAdvance();queuedQuip=null;document.documentElement.classList.remove('quiz-active');
   state.screen='start';
   const saved=answeredCount();
+  const completed=saved===QUESTIONS.length;
   APP.innerHTML=`<main class="page-card" id="page">
     ${header()}
     <section class="hero slide-in" aria-labelledby="landing-title">
       <div class="hero-copy">
         <h1 id="landing-title">Какие у тебя <span class="highlight">политические</span> взгляды?</h1>
         <p class="subtitle">Пройди тест и узнай, к каким идеям ты ближе</p>
-        <button class="primary-btn" type="button" id="start-button">${saved>0?'Продолжить тест':'Начать тест'} <span class="arrow" aria-hidden="true">→</span></button>
-        ${saved>0?`<button class="text-btn" id="restart-button" type="button">Начать заново</button>`:''}
+        <button class="primary-btn" type="button" id="start-button">${saved>0 && !completed?'Продолжить тест':'Начать тест'} <span class="arrow" aria-hidden="true">→</span></button>
         <div class="meta-line">${iconClock()} 5–8 минут · 25 вопросов · без регистрации</div>
         <p class="help-note">Здесь нет правильных ответов: выбирай то, что тебе ближе.</p>
       </div>
@@ -179,9 +262,13 @@ function renderStart(){
     </section>
   </main>`;
   bindSound();
-  document.getElementById('start-button').addEventListener('click',()=>{state.screen='question';state.index=saved>0?state.index:0;currentQuip=null;renderQuestion();});
-  const restart=document.getElementById('restart-button');
-  if(restart)restart.addEventListener('click',()=>{reset();state.screen='question';currentQuip=null;renderQuestion();});
+  document.getElementById('start-button').addEventListener('click',()=>{
+    if(completed)reset();
+    state.screen='question';state.index=(saved>0 && !completed)?state.index:0;
+    currentQuip=null;queuedQuip=null;renderQuestion();
+    lastReactionIndex=state.index;reactionCount=0;
+    playQuip({text:randomLine(QUIPS.intro),kind:'intro'});
+  });
 }
 function renderQuestion(){
   cancelAdvance();document.documentElement.classList.add('quiz-active');
@@ -198,7 +285,7 @@ function renderQuestion(){
         <h2 class="question-title${question.text.length>120?" long-question":""}" id="question-title">${escapeHtml(question.text)}</h2>
         <p class="question-hint">Насколько ты согласен с утверждением?</p>
         <div class="answers" role="radiogroup" aria-label="Выбери один ответ">
-          ${ANSWER_LABELS.map((a,i)=>`<button type="button" class="answer ${selected===a.value?'selected':''}" role="radio" aria-checked="${selected===a.value}" data-value="${a.value}" aria-label="${a.label}"><span class="radio-circle"></span><span>${a.label}</span></button>`).join('')}
+          ${ANSWER_LABELS.map((a,i)=>`<button type="button" class="answer ${selected===a.value?'selected':''}" role="radio" aria-checked="${selected===a.value}" data-value="${a.value}" aria-label="${a.label}"><span class="radio-circle"></span><span class="answer-label">${a.lines.map(escapeHtml).join('<br>')}</span></button>`).join('')}
         </div>
       </div>
       <div class="nav-controls">
@@ -207,7 +294,7 @@ function renderQuestion(){
     </section>
   </main>`;
   bindSound();
-  if(currentQuip && QUIPS[currentQuip])showQuipCard(currentQuip);
+  if(currentQuip)showQuipCard(currentQuip);
   const answers=APP.querySelectorAll('.answer');
   answers.forEach(btn=>btn.addEventListener('click',()=>{
     if(advanceTimer!==null)return;
@@ -216,8 +303,7 @@ function renderQuestion(){
     const updated=Math.round((idx+1)*100/QUESTIONS.length);
     document.querySelector('.progress-fill').style.width=`${updated}%`;
     document.querySelector('.progress-track').setAttribute('aria-valuenow',String(updated));
-    const neutralCount=state.answers.filter(x=>x===0).length;
-    if(value===0 && neutralCount>=4 && !unsureQuipPlayed){unsureQuipPlayed=true;queuedQuip='unsure';}
+    maybeQueueReaction(idx,value);
     advanceTimer=setTimeout(()=>{advanceTimer=null;if(state.screen==='question' && state.index===idx)advance();},280);
   }));
   document.getElementById('back-button').addEventListener('click',()=>{
@@ -229,14 +315,11 @@ function renderQuestion(){
 function advance(){
   if(state.screen!=='question' || state.answers[state.index]===null)return;
   stopAudio();
-  if(state.index===QUESTIONS.length-1){currentQuip=null;renderResults();playQuip('result');return;}
+  if(state.index===QUESTIONS.length-1){currentQuip=null;renderResults();playQuip({text:randomLine(QUIPS.result),kind:'result'});return;}
   state.index+=1; currentQuip=null;
   renderQuestion();
-  const n=state.index+1;
-  const key='q'+n;
   const quip=queuedQuip;queuedQuip=null;
   if(quip)playQuip(quip);
-  else if(QUIPS[key] && [4,10,16,22,25].includes(n))playQuip(key);
 }
 function getScores(){
   const scores={};
@@ -244,7 +327,7 @@ function getScores(){
     const indexes=QUESTIONS.map((q,i)=>({q,i})).filter(x=>x.q.axis===axis.key);
     let points=0;
     for(const {q,i} of indexes){points+=(state.answers[i]??0)*q.polarity;}
-    const percentage=Math.max(0,Math.min(100,Math.round(50+(points/indexes.length)*50)));
+    const percentage=Math.max(0,Math.min(100,Math.round(50+(points/(indexes.length*2))*50)));
     scores[axis.key]=percentage;
   }
   return scores;
@@ -300,10 +383,10 @@ function toast(msg){
  const el=document.getElementById('toast');if(!el)return;
  el.textContent=msg;el.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('visible'),2400);
 }
-function reset(){cancelAdvance();queuedQuip=null;state.answers=Array(QUESTIONS.length).fill(null);state.index=0;unsureQuipPlayed=false;currentQuip=null;save();}
+function reset(){cancelAdvance();queuedQuip=null;state.answers=Array(QUESTIONS.length).fill(null);state.index=0;lastReactionIndex=-10;reactionCount=0;currentQuip=null;save();}
 window.addEventListener('keydown',e=>{
  if(state.screen!=='question' || e.altKey||e.ctrlKey||e.metaKey||['INPUT','TEXTAREA'].includes(document.activeElement?.tagName))return;
- if(['1','2','3'].includes(e.key)){
+ if(['1','2','3','4','5'].includes(e.key)){
   const btn=APP.querySelectorAll('.answer')[Number(e.key)-1];if(btn){btn.click();e.preventDefault();}
  }
  if(e.key==='ArrowLeft' && document.activeElement?.tagName!=='BUTTON'){
