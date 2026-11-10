@@ -183,6 +183,7 @@ function bindCommon(){
 }
 
 function renderStart(){
+  state.screen='start';
   document.documentElement.classList.remove('quiz-active');
   const count = answeredCount();
   APP.innerHTML = `
@@ -215,6 +216,7 @@ function renderStart(){
 }
 
 function renderQuestion(){
+  state.screen='question';
   document.documentElement.classList.add('quiz-active');
   const idx = state.index;
   const q = QUESTIONS[idx];
@@ -367,8 +369,8 @@ function renderResults(){
             <h3>Самостоятельная подготовка<br>к обществознанию</h3>
             <p>Если обществознание всё ещё путается в голове — можно готовиться спокойно и системно на онлайн-платформе: короткие уроки, конспекты, тесты и тренажёры.</p>
             <div class="cta-buttons">
-              <a class="cta-btn" href="https://anicourses.ru" target="_blank" rel="noopener">ОГЭ</a>
-              <a class="cta-btn" href="https://anicourses.ru" target="_blank" rel="noopener">ЕГЭ</a>
+              <a class="cta-btn" href="https://anicourses.ru/obsh_oge" target="_blank" rel="noopener">ОГЭ</a>
+              <a class="cta-btn" href="https://anicourses.ru/obsh" target="_blank" rel="noopener">ЕГЭ</a>
             </div>
           </div>
           <div class="cta-photo"><img src="assets/teacher.jpg" alt="Преподаватель Аникурсов"></div>
