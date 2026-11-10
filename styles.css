@@ -135,3 +135,56 @@ html.quiz-active .app-shell{height:100dvh;min-height:0;padding:0;display:flex;ov
   .header-actions{gap:6px}
   .quiz-card .restart-control{font-size:clamp(9px,2.4vw,11px)!important;padding:7px 8px!important}
 }
+
+/* RESULTS MAP — location markers instead of progress bars */
+.results-heading{margin:26px 0 22px;align-items:center}
+.results-title{margin:4px 0 14px}
+.results-lead{font-size:16px;line-height:1.55;max-width:780px;margin:0 0 8px}
+.results-guide{font-size:13px;line-height:1.5;color:#77737a;max-width:760px;margin:8px 0 0}
+.results-list{gap:15px}
+.results-card .axis-card{
+  background:#f7f5f4;
+  border:1px solid #eeebeb;
+  padding:21px clamp(15px,2.2vw,30px);
+  border-radius:20px;
+}
+.results-card .axis-header{align-items:baseline;gap:15px}
+.results-card .axis-heading{font-size:15px;letter-spacing:.005em}
+.results-card .axis-labels{margin-top:18px;font-size:13px;line-height:1.3;font-weight:750;align-items:end}
+.results-card .axis-labels span{flex:1;min-width:0}
+.results-card .axis-labels span:last-child{text-align:right}
+.results-card .axis-line{
+  position:relative;
+  margin:30px 12px 22px;
+  height:4px;
+  background:#c7c4c7;
+  border-radius:99px;
+}
+.results-card .axis-mid-line{
+  position:absolute;left:50%;top:-5px;height:14px;width:2px;
+  background:#fff;border:1px solid #b1adb2;border-radius:3px;
+  transform:translateX(-50%);
+}
+.results-card .axis-pin{
+  position:absolute;bottom:0;
+  transform:translateX(-50%);
+  width:30px;height:38px;
+  filter:drop-shadow(0 2px 2px #00000016);
+}
+.results-card .axis-interpretation{margin-top:0;display:grid;gap:5px}
+.results-card .axis-tendency{font-size:14px;line-height:1.35;font-weight:800;color:#28262a}
+.results-card .axis-explanation{font-size:14px;line-height:1.5;margin:0;color:#57525a;max-width:930px}
+@media(max-width:740px){
+ .results-heading{margin:16px 0 17px;align-items:flex-start}
+ .results-title{font-size:clamp(30px,8vw,43px);margin:0 0 10px}
+ .results-lead{font-size:14px;line-height:1.48}
+ .results-guide{font-size:12px;line-height:1.45}
+ .results-card .axis-card{padding:17px 14px;border-radius:16px}
+ .results-card .axis-header{align-items:flex-start}
+ .results-card .axis-heading{font-size:13px}
+ .results-card .axis-labels{font-size:11px;gap:8px;margin-top:17px}
+ .results-card .axis-line{margin:30px 11px 21px}
+ .results-card .axis-pin{width:27px;height:35px}
+ .results-card .axis-tendency{font-size:13px}
+ .results-card .axis-explanation{font-size:12px}
+}
