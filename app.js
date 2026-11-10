@@ -34,6 +34,11 @@ const QUESTIONS = [
   { text:'Религиозные и культурные традиции должны заметно влиять на законы государства.', axis:'society', polarity:-1 },
   { text:'В ключевых политических решениях стране лучше меньше зависеть от зарубежных объединений и союзов.', axis:'world', polarity:-1 },
   { text:'Даже в кризисные времена независимые суды должны проверять решения властей, ограничивающие свободы граждан.', axis:'freedoms', polarity: 1 },
+  { text:'Государство должно устанавливать минимальную оплату труда, даже если некоторым компаниям станет сложнее нанимать сотрудников.', axis:'economy', polarity: 1 },
+  { text:'Государство должно защищать право человека на непопулярные публичные высказывания, если в них нет призывов к насилию.', axis:'freedoms', polarity: 1 },
+  { text:'Для общества важнее сохранять привычные семейные роли, чем пересматривать их в соответствии с современными представлениями.', axis:'society', polarity:-1 },
+  { text:'Страна должна участвовать в международных гуманитарных проектах, даже если это не приносит ей прямой экономической выгоды.', axis:'world', polarity: 1 },
+  { text:'Государство должно ограничивать рост цен на товары первой необходимости, даже если бизнесу это невыгодно.', axis:'economy', polarity: 1 },
 ];
 
 const AXES = [
@@ -162,11 +167,12 @@ function cancelAdvance(){if(advanceTimer!==null){clearTimeout(advanceTimer);adva
 function safeLoad(){
   try {
     const raw=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
-    if(raw && Array.isArray(raw.answers) && raw.answers.length===QUESTIONS.length){
+    if(raw && Array.isArray(raw.answers) && [25,QUESTIONS.length].includes(raw.answers.length)){
       const okay=raw.answers.every(x=>x===null || [-2,-1,0,1,2].includes(x));
       if(okay){
-        state.answers=raw.answers;
-        state.index=Number.isInteger(raw.index)?Math.max(0,Math.min(QUESTIONS.length-1,raw.index)):0;
+        state.answers=raw.answers.concat(Array(QUESTIONS.length-raw.answers.length).fill(null));
+        const previousComplete=raw.answers.length===25 && raw.answers.every(v=>v!==null);
+        state.index=previousComplete?25:(Number.isInteger(raw.index)?Math.max(0,Math.min(QUESTIONS.length-1,raw.index)):0);
         state.muted=raw.muted===true;
       }
     }
@@ -261,7 +267,7 @@ function renderStart(){
         <h1 id="landing-title">Какие у тебя <span class="highlight">политические</span> взгляды?</h1>
         <p class="subtitle">Пройди тест и узнай, к каким идеям ты ближе</p>
         <button class="primary-btn" type="button" id="start-button">${saved>0 && !completed?'Продолжить тест':'Начать тест'} <span class="arrow" aria-hidden="true">→</span></button>
-        <div class="meta-line">${iconClock()} 5–8 минут · 25 вопросов · без регистрации</div>
+        <div class="meta-line">${iconClock()} 7–10 минут · ${QUESTIONS.length} вопросов · без регистрации</div>
         <p class="help-note">Здесь нет правильных ответов: выбирай то, что тебе ближе.</p>
       </div>
       <div class="hero-art" aria-hidden="true"><div class="orange-blob"></div><img src="assets/mole-relax.webp" alt=""><span class="doodle">✦</span></div>
@@ -321,7 +327,7 @@ function renderQuestion(){
 function advance(){
   if(state.screen!=='question' || state.answers[state.index]===null)return;
   stopAudio();
-  if(state.index===QUESTIONS.length-1){currentQuip=null;renderResults();playQuip({text:randomLine(QUIPS.result),kind:'result'});return;}
+  if(state.index===QUESTIONS.length-1){currentQuip=null;renderResults();return;}
   state.index+=1; currentQuip=null;
   renderQuestion();
   const quip=queuedQuip;queuedQuip=null;
@@ -338,18 +344,78 @@ function getScores(){
   }
   return scores;
 }
-function resultSummary(scores){
-  const extremes=AXES.map(a=>({a,score:scores[a.key],deviation:Math.abs(scores[a.key]-50)})).filter(x=>x.deviation>=16).sort((a,b)=>b.deviation-a.deviation);
-  if(state.answers.filter(x=>x===0).length>=12) return 'Ты пока оставляешь многие вопросы открытыми — и это нормально. На шкалах ниже видно, где позиция определилась, а где ещё есть над чем подумать.';
-  if(!extremes.length)return 'Твои ответы оказались близки к середине нескольких шкал. Возможно, ты выбираешь разные подходы в зависимости от ситуации.';
-  const first=extremes[0];
-  const direction=first.score>50?first.a.left.toLowerCase():first.a.right.toLowerCase();
-  return `Сильнее всего в ответах проявилась склонность к позиции «${direction}» в разделе «${first.a.title.toLowerCase()}». Остальные шкалы показывают, в чём твои взгляды совпадают с разными подходами.`;
+const AXIS_INTERPRETATIONS = {
+  "economy": {
+    "left": [
+      "Государство активнее участвует в экономике",
+      "Ты чаще за регулирование компаний, доступные общественные услуги и социальные гарантии."
+    ],
+    "right": [
+      "Больше свободы для рынка",
+      "Ты чаще за самостоятельность бизнеса, конкуренцию и более ограниченное государственное вмешательство."
+    ],
+    "center": [
+      "Сочетание разных подходов",
+      "В одних вопросах ты за участие государства, в других — за свободный рынок."
+    ]
+  },
+  "freedoms": {
+    "left": [
+      "Важнее личные свободы",
+      "Ты чаще поддерживаешь свободу слова и собраний, а также контроль над действиями власти."
+    ],
+    "right": [
+      "Важнее безопасность и порядок",
+      "Ты чаще допускаешь расширение полномочий государства ради порядка и безопасности."
+    ],
+    "center": [
+      "Баланс свободы и безопасности",
+      "По разным вопросам ты выбирал и защиту гражданских свобод, и полномочия власти."
+    ]
+  },
+  "society": {
+    "left": [
+      "Ближе к общественным переменам",
+      "Ты чаще за обновление общественных норм и свободу личного выбора."
+    ],
+    "right": [
+      "Ближе к сохранению традиций",
+      "Ты чаще считаешь важным сохранять привычные нормы и культурные традиции."
+    ],
+    "center": [
+      "Между переменами и традициями",
+      "Одни традиции ты готов сохранять, другие общественные нормы — пересматривать."
+    ]
+  },
+  "world": {
+    "left": [
+      "Ближе к международному сотрудничеству",
+      "Ты чаще за договорённости и совместные проекты разных стран."
+    ],
+    "right": [
+      "Ближе к самостоятельности страны",
+      "Ты чаще за независимость решений страны от международных объединений."
+    ],
+    "center": [
+      "Сотрудничество и самостоятельность",
+      "Твои ответы сочетают поддержку международных договорённостей и свободы решений страны."
+    ]
+  }
+};
+function axisInterpretation(axis,score){
+  const direction=score>=57?'left':score<=43?'right':'center';
+  const [title,description]=AXIS_INTERPRETATIONS[axis.key][direction];
+  const strength=(direction==='center')?'mixed':(Math.abs(score-50)>=18?'clear':'mild');
+  const label=direction==='center'?'Нет явного уклона':strength==='mild'?('Небольшой уклон: '+title.toLowerCase()):title;
+  return {label,description,direction};
 }
-function axisComment(score){
-  if(score>=67)return 'Ближе к позиции слева';
-  if(score<=33)return 'Ближе к позиции справа';
-  return 'Смешанная или умеренная позиция';
+function resultSummary(scores){
+  const neutral=state.answers.filter(v=>v===0).length;
+  if(neutral>=12)return 'Ты часто выбирал «Трудно ответить», поэтому некоторые позиции пока не определились. Ниже — расшифровка остальных ответов.';
+  const candidates=AXES.map(axis=>({axis,score:scores[axis.key],distance:Math.abs(scores[axis.key]-50)})).sort((a,b)=>b.distance-a.distance);
+  const strongest=candidates[0];
+  if(strongest.distance<12)return 'Твои ответы оказались разными в зависимости от темы. Это не обязательно «центристская» позиция — посмотри расшифровку каждой шкалы.';
+  return `Наиболее заметный уклон у тебя в теме «${strongest.axis.title.toLowerCase()}»: ${axisInterpretation(strongest.axis,strongest.score).label.toLowerCase()}. Остальные направления смотри ниже.`;
 }
 function renderResults(){
   cancelAdvance();queuedQuip=null;document.documentElement.classList.remove('quiz-active');
@@ -358,21 +424,27 @@ function renderResults(){
   APP.innerHTML=`<main class="page-card results-card" id="page">
      ${header()}
      <section class="slide-in">
-      <div class="results-heading"><div><div class="hero-eyebrow">25 из 25 · тест завершён</div>
-       <h1 class="results-title">Твоя политическая <span style="color:var(--pink)">карта</span></h1>
-       <p class="results-lead">${escapeHtml(resultSummary(scores))}</p><div class="mole-caption results-quip" data-mole-message>Крот готовит торжественную речь...</div></div>
-       <img class="results-mole" src="assets/mole-relax.webp" alt="Довольный Крот завершил подсчёт">
-      </div>
+      <div class="results-heading"><div>
+        <h1 class="results-title">Твоя политическая <span style="color:var(--pink)">карта</span></h1>
+        <p class="results-lead">${escapeHtml(resultSummary(scores))}</p>
+        <p class="results-guide">Значок показывает, в какую сторону склоняются твои ответы. Середина шкалы означает, что явного уклона нет.</p>
+      </div><img class="results-mole" src="assets/mole-relax.webp" alt="Крот смотрит на результаты"></div>
       <div class="results-list">
-       ${AXES.map(a=>{const p=scores[a.key];return `<div class="axis-card">
-         <div class="axis-header"><span class="axis-heading">${a.title}</span><span class="axis-short">${a.short}</span></div>
-         <div class="axis-labels"><span>${a.left} <strong>${p}%</strong></span><span><strong>${100-p}%</strong> ${a.right}</span></div>
-         <div class="axis-bar" role="img" aria-label="${a.left} ${p} процентов, ${a.right} ${100-p} процентов"><div class="left-fill" style="width:${p}%;background:${a.color}"></div><span class="mid-line"></span></div>
-         <div class="axis-summary">${axisComment(p)}</div>
-       </div>`;}).join('')}
+        ${AXES.map(axis=>{
+          const score=scores[axis.key],meaning=axisInterpretation(axis,score),markerPos=4+(100-score)*.92;
+          return `<article class="axis-card" style="--axis-color:${axis.color}">
+            <div class="axis-header"><span class="axis-heading">${axis.title}</span><span class="axis-short">${axis.short}</span></div>
+            <div class="axis-labels"><span>${axis.left}</span><span>${axis.right}</span></div>
+            <div class="axis-line" role="img" aria-label="Положение на шкале: ${escapeHtml(meaning.label)}">
+              <span class="axis-mid-line" aria-hidden="true"></span>
+              <svg class="axis-pin" style="left:${markerPos}%" viewBox="0 0 24 30" width="30" height="38" aria-hidden="true"><path d="M12 1.5C6.1 1.5 2 5.8 2 11c0 7.1 10 17.5 10 17.5S22 18.1 22 11C22 5.8 17.9 1.5 12 1.5Z" fill="var(--axis-color)" stroke="#242426" stroke-width="1.2"/><circle cx="12" cy="11" r="4" fill="white"/></svg>
+            </div>
+            <div class="axis-interpretation"><strong class="axis-tendency">${escapeHtml(meaning.label)}</strong><p class="axis-explanation">${escapeHtml(meaning.description)}</p></div>
+          </article>`;
+        }).join('')}
       </div>
       <div class="results-footer">
-       <div class="disclaimer">Это развлекательный образовательный тест, а не научная диагностика или характеристика личности. Проценты отражают только твои ответы на эти 25 утверждений. Они не определяют политическую принадлежность и не означают, что одна позиция лучше другой. Ответы не отправляются на сервер.</div>
+       <div class="disclaimer">Это развлекательный образовательный тест, а не научная диагностика или характеристика личности. Отметки показывают распределение твоих ответов на 30 утверждений, а не научно установленную политическую принадлежность. Ни одна из позиций не считается правильной или неправильной. Ответы не отправляются на сервер.</div>
        <div class="results-actions"><button class="secondary-btn" type="button" id="copy-button">↗ Скопировать результат</button><button class="primary-btn" type="button" id="retry-button">Пройти ещё раз <span class="arrow">↻</span></button></div>
       </div>
     </section>
@@ -380,7 +452,7 @@ function renderResults(){
   bindSound();
   document.getElementById('retry-button').addEventListener('click',()=>{stopAudio();reset();renderStart();});
   document.getElementById('copy-button').addEventListener('click',async()=>{
-   const text=`Мой результат в тесте АНИКУРСОВ «Какие у тебя политические взгляды?»\n${AXES.map(a=>`${a.title}: ${a.left} ${scores[a.key]}% / ${a.right} ${100-scores[a.key]}%`).join('\n')}\nПройди тест: ${location.href.split('#')[0]}`;
+   const text=`Моя политическая карта — тест АНИКУРСОВ\n${AXES.map(a=>`${a.title}: ${axisInterpretation(a,scores[a.key]).label}`).join('\n')}\nПройди тест: ${location.href.split('#')[0]}`;
    try { await navigator.clipboard.writeText(text);toast('Результат скопирован!'); }
    catch(_) {const area=document.createElement('textarea');area.value=text;document.body.appendChild(area);area.select();const success=document.execCommand('copy');area.remove();toast(success?'Результат скопирован!':'Не удалось скопировать автоматически');}
   });
